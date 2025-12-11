@@ -4,18 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>香港停車場位置地圖</title>
-    
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
-    
     <!-- Bootstrap CSS for card styling -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.min.css">
-    
     <!-- Custom CSS -->
     <style>
         body {
@@ -23,12 +19,10 @@
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', Roboto, Oxygen, Ubuntu, sans-serif;
         }
-        
         #map {
             height: 100vh;
             width: 100%;
         }
-        
         .header {
             position: absolute;
             top: 10px;
@@ -39,20 +33,64 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             max-width: 350px;
+            transition: all 0.3s ease;
         }
-        
         .header h1 {
             margin: 0 0 10px 0;
             font-size: 1.5rem;
             color: #333;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        
+        .header h1 .toggle-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+        .header h1 .toggle-icon.collapsed {
+            transform: rotate(180deg);
+        }
         .header p {
-            margin: 0;
+            margin: 0 0 10px 0;
             color: #666;
             font-size: 0.9rem;
         }
-        
+        .header-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            max-height: 500px;
+            opacity: 1;
+        }
+        .header-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+        }
+        .district-filter {
+            margin-bottom: 10px;
+        }
+        .district-filter label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+        .district-filter select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            background-color: white;
+            cursor: pointer;
+        }
+        .district-filter select:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
+        }
         .loading {
             position: absolute;
             top: 50%;
@@ -65,7 +103,6 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             text-align: center;
         }
-        
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             width: 36px;
@@ -75,47 +112,155 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 10px;
         }
-        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
         /* Customize popup styling */
         .leaflet-popup-content {
             min-width: 250px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        /* Mobile-specific popup styling */
+        @media (max-width: 500px), (max-height: 500px) {
+            .leaflet-popup-content {
+                min-width: 200px;
+                max-width: 90vw;
+                max-height: 60vh;
+                font-size: 0.9rem;
+            }
+            
+            .leaflet-popup {
+                max-width: 90vw !important;
+            }
+            
+            .mobile-popup h3 {
+                font-size: 1.1rem !important;
+                margin-bottom: 8px !important;
+                line-height: 1.2 !important;
+            }
+            
+            .mobile-popup .card {
+                margin-top: 6px;
+                padding: 8px;
+            }
+            
+            .mobile-popup .card-title {
+                font-size: 0.9rem !important;
+                margin-bottom: 4px !important;
+            }
+            
+            .mobile-popup .card-text {
+                font-size: 0.85rem !important;
+                line-height: 1.3 !important;
+            }
+            
+            .mobile-popup .d-flex.flex-row {
+                flex-direction: column !important;
+            }
+            
+            .mobile-popup .card.mx-1 {
+                margin: 4px 0 !important;
+                width: 100% !important;
+            }
+            
+            .mobile-popup .photo-btn {
+                padding: 6px 10px;
+                font-size: 0.85rem;
+            }
+            
+            /* Adjust header for mobile */
+            .header {
+                max-width: 280px;
+                padding: 10px;
+                top: 5px;
+                left: 5px;
+            }
+            
+            .header h1 {
+                font-size: 1.2rem;
+                margin-bottom: 5px;
+            }
+            
+            .header p {
+                font-size: 0.8rem;
+            }
+            
+            #counter {
+                font-size: 0.85rem;
+            }
+            
+            .header h1 .toggle-icon {
+                font-size: 1rem;
+            }
+            
+            .district-filter select {
+                padding: 6px 10px;
+                font-size: 0.85rem;
+            }
         }
         
         .card {
             margin-top: 10px;
             border: 1px solid #ddd;
         }
-        
         .card-title {
             font-size: 1rem;
             margin-bottom: 0.5rem;
         }
-        
         .card-text {
             font-size: 0.9rem;
             margin-bottom: 0;
         }
-        
         .photo-btn {
             width: 100%;
             margin-top: 8px;
         }
-        
         /* Custom marker icon styling */
         .custom-marker-icon {
             filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));
         }
-        
         /* Counter styling */
         #counter {
             font-weight: bold;
             color: #0066cc;
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #0066cc;
+        }
+        
+        /* SweetAlert2 mobile adjustments */
+        @media (max-width: 500px), (max-height: 500px) {
+            .swal2-popup {
+                width: 90% !important;
+                max-width: 90vw !important;
+                padding: 15px !important;
+            }
+            
+            .swal2-title {
+                font-size: 1.1rem !important;
+            }
+            
+            .photo-modal .swal2-html-container {
+                max-height: 50vh !important;
+                overflow-y: auto !important;
+            }
+        }
+        
+        /* Filter button styling */
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
             margin-top: 5px;
+        }
+        .filter-buttons button {
+            flex: 1;
+            padding: 6px 12px;
+            font-size: 0.85rem;
         }
     </style>
 </head>
@@ -125,9 +270,27 @@
     
     <!-- Header with title and info -->
     <div class="header">
-        <h1>香港停車場位置地圖</h1>
-        <p>顯示公共停車場的詳細資訊。點擊任何標記查看詳情。</p>
-        <div id="counter">載入數據中...</div>
+        <h1 id="header-title">
+            香港停車場位置地圖
+            <span class="toggle-icon">▼</span>
+        </h1>
+        <div id="header-content" class="header-content">
+            <p>顯示公共停車場的詳細資訊。點擊任何標記查看詳情。</p>
+            
+            <!-- District Filter -->
+            <div class="district-filter">
+                <label for="district-select">篩選區域：</label>
+                <select id="district-select">
+                    <option value="all">所有區域</option>
+                    <!-- Districts will be populated dynamically -->
+                </select>
+                <div class="filter-buttons">
+                    <button id="filter-reset" class="btn btn-secondary btn-sm">重置</button>
+                </div>
+            </div>
+            
+            <div id="counter">載入數據中...</div>
+        </div>
     </div>
     
     <!-- Loading indicator -->
@@ -135,55 +298,88 @@
         <div class="spinner"></div>
         <p>正在載入停車場數據...</p>
     </div>
-    
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
-    
     <!-- SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js"></script>
-    
     <script>
+		// Global constants
+		const defaultOption = '荃灣區';
+		
+        // Global variables
+        let allMarkers = [];
+        let currentMarkers = [];
+        let allData = null;
+        let districtSelect = null;
+        
+        // Check if device is mobile (width <= 500px or height <= 500px)
+        function isMobileDevice() {
+            return window.innerWidth <= 500 || window.innerHeight <= 500;
+        }
+        
         // Initialize the map
-        const map = L.map('map').setView([22.3193, 114.1694], 11); // 地圖中心設在香港
+        const map = L.map('map').setView([22.3193, 114.1694], 14); // 地圖中心設在香港
         
         // Add OpenStreetMap tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
         
+        // Collapsible header functionality
+        let headerCollapsed = false;
+        const headerTitle = document.getElementById('header-title');
+        const headerContent = document.getElementById('header-content');
+        const toggleIcon = headerTitle.querySelector('.toggle-icon');
+        
+        headerTitle.addEventListener('click', function() {
+            headerCollapsed = !headerCollapsed;
+            
+            if (headerCollapsed) {
+                headerContent.classList.add('collapsed');
+                toggleIcon.classList.add('collapsed');
+                toggleIcon.textContent = '▲';
+            } else {
+                headerContent.classList.remove('collapsed');
+                toggleIcon.classList.remove('collapsed');
+                toggleIcon.textContent = '▼';
+            }
+        });
+        
         // Create custom marker icon
         const customIcon = L.icon({
             iconUrl: 'https://img.icons8.com/?size=100&id=6QzPKGitR7r2&format=png&color=000000',
-            iconSize: [30, 30], // 調整圖標大小
-            iconAnchor: [15, 30], // 圖標的錨點，對應標記的位置
-            popupAnchor: [0, -30], // 彈出窗口相對於iconAnchor的開啟位置
+            iconSize: isMobileDevice() ? [25, 25] : [30, 30], // 根據設備調整圖標大小
+            iconAnchor: isMobileDevice() ? [12, 25] : [15, 30], // 圖標的錨點，對應標記的位置
+            popupAnchor: isMobileDevice() ? [0, -25] : [0, -30], // 彈出窗口相對於iconAnchor的開啟位置
             className: 'custom-marker-icon'
         });
         
         // Function to show photo in SweetAlert2
         function showCarparkPhoto(photoUrl, carparkName) {
+            const isMobile = isMobileDevice();
             Swal.fire({
                 title: `${carparkName || '停車場'} 照片`,
                 html: `
                     <div style="text-align: center;">
-                        <img src="${photoUrl}" 
-                             alt="停車場照片" 
-                             style="max-width: 100%; max-height: 400px; border-radius: 8px; margin-bottom: 15px;">
-                        <p style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+                        <img src="${photoUrl}"
+                             alt="停車場照片"
+                             style="max-width: 100%; max-height: ${isMobile ? '300px' : '400px'}; border-radius: 8px; margin-bottom: 15px;">
+                        <p style="margin-top: 10px; font-size: ${isMobile ? '0.8rem' : '0.9rem'}; color: #666;">
                             點擊對話框外部或按ESC鍵關閉
                         </p>
                     </div>
                 `,
                 showCloseButton: true,
                 showConfirmButton: false,
-                width: '80%',
-                padding: '20px',
+                width: isMobile ? '95%' : '80%',
+                padding: isMobile ? '15px' : '20px',
                 background: '#fff',
                 backdrop: 'rgba(0,0,0,0.5)',
                 customClass: {
-                    container: 'photo-modal'
+                    container: 'photo-modal',
+                    popup: isMobile ? 'mobile-swal' : ''
                 }
             });
         }
@@ -191,50 +387,194 @@
         // Function to create popup content
         function createPopupContent(feature) {
             const props = feature.properties;
+            const isMobile = isMobileDevice();
             
             // Create a unique ID for the photo button to prevent event conflicts
             const photoBtnId = `photo-btn-${props.park_id || Math.random().toString(36).substr(2, 9)}`;
             
             return `
-                <h3>${props.name_tc}<br/>${props.name_en}</h3>
-                <div class="d-flex flex-column">
-                    <div class="d-flex flex-row">
-                        <div class="card w-100 mx-1">
-                            <div class="card-body">
-                                <h5 class="card-title text-decoration-underline">區域</h5>
+                <div class="${isMobile ? 'mobile-popup' : ''}">
+                    <h3 style="font-size: ${isMobile ? '1.1rem' : '1.25rem'}; margin-bottom: ${isMobile ? '8px' : '10px'}; line-height: ${isMobile ? '1.2' : '1.3'}">
+                        ${props.name_tc}<br/>
+                        <small style="font-size: ${isMobile ? '0.85rem' : '0.9rem'}; color: #666;">${props.name_en}</small>
+                    </h3>
+                    <div class="d-flex flex-column">
+                        <div class="d-flex ${isMobile ? 'flex-column' : 'flex-row'}">
+                            <div class="card ${isMobile ? 'w-100 my-1' : 'w-100 mx-1'}">
+                                <div class="card-body" style="padding: ${isMobile ? '10px' : '1rem'}">
+                                    <h5 class="card-title text-decoration-underline">區域</h5>
+                                    <p class="card-text">
+                                        ${props.district_tc}
+                                        <br/>
+                                        <small style="color: #666;">${props.district_en}</small>
+                                    </p>
+                                </div>
+                            </div>
+                            ${props.contactNo && props.contactNo !== 'None' ? `
+                            <div class="card ${isMobile ? 'w-100 my-1' : 'mx-1'}" style="${isMobile ? '' : 'width:180px'}">
+                                <div class="card-body" style="padding: ${isMobile ? '10px' : '1rem'}">
+                                    <h5 class="card-title text-decoration-underline">聯絡電話</h5>
+                                    <p class="card-text">${props.contactNo}</p>
+                                </div>
+                            </div>` : ''}
+                        </div>
+                        <div class="card ${isMobile ? 'my-1' : 'mx-1'}">
+                            <div class="card-body" style="padding: ${isMobile ? '10px' : '1rem'}">
+                                <h5 class="card-title text-decoration-underline">地址</h5>
                                 <p class="card-text">
-                                    ${props.district_tc}
+                                    ${props.displayAddress_tc}
                                     <br/>
-                                    ${props.district_en}
+                                    <small style="color: #666;">${props.displayAddress_en}</small>
                                 </p>
                             </div>
                         </div>
-                        ${props.contactNo && props.contactNo !== 'None' ? `
-                        <div class="card mx-1" style="width:180px">
-                            <div class="card-body">
-                                <h5 class="card-title text-decoration-underline">聯絡電話</h5>
-                                <p class="card-text">${props.contactNo}</p>
-                            </div>
+                        ${props.carpark_photo && props.carpark_photo !== 'None' ? `
+                        <div class="${isMobile ? 'my-1' : 'mx-1'}">
+                            <button id="${photoBtnId}" class="btn btn-primary photo-btn" style="padding: ${isMobile ? '6px 10px' : '8px 16px'}; font-size: ${isMobile ? '0.85rem' : '0.9rem'}">
+                                <i class="bi bi-image"></i> 查看停車場照片
+                            </button>
                         </div>` : ''}
                     </div>
-                    <div class="card mx-1">
-                        <div class="card-body">
-                            <h5 class="card-title text-decoration-underline">地址</h5>
-                            <p class="card-text">
-                                ${props.displayAddress_tc}
-                                <br/>
-                                ${props.displayAddress_en}
-                            </p>
-                        </div>
-                    </div>
-                    ${props.carpark_photo && props.carpark_photo !== 'None' ? `
-                    <div class="mx-1">
-                        <button id="${photoBtnId}" class="btn btn-primary photo-btn">
-                            <i class="bi bi-image"></i> 查看停車場照片
-                        </button>
-                    </div>` : ''}
                 </div>
             `;
+        }
+        
+        // Function to populate district filter dropdown
+        function populateDistrictFilter(data) {
+            const districtSelect = document.getElementById('district-select');
+			
+            // Extract unique districts from the data
+            const districts = new Set();
+            data.features.forEach(feature => {
+                const districtTc = feature.properties.district_tc;
+                if (districtTc && districtTc !== 'None') {
+                    districts.add(districtTc);
+                }
+            });
+            
+            // Sort districts alphabetically
+            const sortedDistricts = Array.from(districts).sort();
+            
+            // Clear existing options except "All"
+            while (districtSelect.options.length > 1) {
+                districtSelect.remove(1);
+            }
+            
+            // Add district options
+            sortedDistricts.forEach(district => {
+                const option = document.createElement('option');
+                option.value = district;
+                option.textContent = district;
+				option.selected = district == defaultOption;
+                districtSelect.appendChild(option);
+            });
+        }
+        
+        // Function to filter markers by district
+        function filterMarkersByDistrict(district) {
+            // Remove all current markers from the map
+            currentMarkers.forEach(marker => {
+                map.removeLayer(marker);
+            });
+            currentMarkers = [];
+            
+            // Filter markers based on selected district
+            let filteredMarkers = [];
+            if (district === 'all') {
+                filteredMarkers = allMarkers;
+            } else {
+                filteredMarkers = allMarkers.filter(marker => {
+                    const districtTc = marker.feature.properties.district_tc;
+                    return districtTc === district;
+                });
+            }
+            
+            // Add filtered markers to the map
+            filteredMarkers.forEach(markerData => {
+                const marker = markerData.marker;
+                map.addLayer(marker);
+                currentMarkers.push(marker);
+            });
+            
+            // Update counter
+            const counter = document.getElementById('counter');
+            if (district === 'all') {
+                counter.textContent = `顯示所有 ${filteredMarkers.length} 個停車場`;
+            } else {
+                counter.textContent = `顯示 ${district} 區域的 ${filteredMarkers.length} 個停車場`;
+            }
+            
+            // Fit bounds to show filtered markers
+            if (filteredMarkers.length > 0) {
+                const bounds = L.latLngBounds(
+                    filteredMarkers.map(markerData => markerData.latlng)
+                );
+                if (bounds.isValid()) {
+                    const padding = isMobileDevice() ? 0.05 : 0.1;
+                    map.fitBounds(bounds.pad(padding));
+                }
+            }
+        }
+        
+        // Function to create markers from data
+        function createMarkersFromData(data) {
+            const markers = [];
+            
+            data.features.forEach(feature => {
+                // Get coordinates from geometry
+                const coords = feature.geometry.coordinates;
+                const latLng = [coords[1], coords[0]]; // GeoJSON使用[經度, 緯度]，Leaflet使用[緯度, 經度]
+                
+                // Create marker with custom icon
+                const marker = L.marker(latLng, {
+                    title: feature.properties.name_tc || feature.properties.name_en,
+                    icon: customIcon // 使用自定義圖標
+                });
+                
+                // Create popup content
+                const popupContent = createPopupContent(feature);
+                
+                // Determine popup max width based on device
+                const isMobile = isMobileDevice();
+                const popupMaxWidth = isMobile ? 320 : 400;
+                const popupMinWidth = isMobile ? 200 : 300;
+                
+                // Create popup with responsive settings
+                const popup = L.popup({
+                    maxWidth: popupMaxWidth,
+                    minWidth: popupMinWidth,
+                    maxHeight: isMobile ? 350 : 450,
+                    className: isMobile ? 'mobile-popup-container' : ''
+                }).setContent(popupContent);
+                
+                // Bind popup to marker
+                marker.bindPopup(popup);
+                
+                // Add click event listener to marker
+                marker.on('popupopen', function() {
+                    // Add event listener for photo button after popup opens
+                    const photoBtn = document.getElementById(`photo-btn-${feature.properties.park_id || ''}`);
+                    if (photoBtn && feature.properties.carpark_photo && feature.properties.carpark_photo !== 'None') {
+                        photoBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            showCarparkPhoto(
+                                feature.properties.carpark_photo,
+                                feature.properties.name_tc || feature.properties.name_en
+                            );
+                        });
+                    }
+                });
+                
+                // Store marker data
+                markers.push({
+                    marker: marker,
+                    latlng: latLng,
+                    feature: feature
+                });
+            });
+            
+            return markers;
         }
         
         // Function to fetch and display data
@@ -246,12 +586,12 @@
                 
                 // Fetch data from the WFS service
                 const response = await fetch('https://portal.csdi.gov.hk/server/services/common/td_rcd_1638948197838_85279/MapServer/WFSServer?service=wfs&request=GetFeature&typenames=basic_info_all&outputFormat=geojson');
-                
                 if (!response.ok) {
                     throw new Error(`HTTP錯誤！狀態碼: ${response.status}`);
                 }
                 
                 const data = await response.json();
+                allData = data; // Store data globally
                 
                 // Hide loading indicator
                 document.getElementById('loading').style.display = 'none';
@@ -262,58 +602,30 @@
                     return;
                 }
                 
-                // Update counter
-                document.getElementById('counter').textContent = `顯示 ${data.features.length} 個停車場`;
+                // Create markers and store them
+                allMarkers = createMarkersFromData(data);
                 
-                // Create a feature group to hold all markers
-                const carparkMarkers = L.featureGroup().addTo(map);
+                // Populate district filter dropdown
+                populateDistrictFilter(data);
                 
-                // Add each feature as a marker
-                data.features.forEach(feature => {
-                    // Get coordinates from geometry
-                    const coords = feature.geometry.coordinates;
-                    const latLng = [coords[1], coords[0]]; // GeoJSON使用[經度, 緯度]，Leaflet使用[緯度, 經度]
-                    
-                    // Create marker with custom icon
-                    const marker = L.marker(latLng, {
-                        title: feature.properties.name_tc || feature.properties.name_en,
-                        icon: customIcon // 使用自定義圖標
-                    });
-                    
-                    // Create popup content
-                    const popupContent = createPopupContent(feature);
-                    
-                    // Create popup
-                    const popup = L.popup({
-                        maxWidth: 400,
-                        minWidth: 300
-                    }).setContent(popupContent);
-                    
-                    // Bind popup to marker
-                    marker.bindPopup(popup);
-                    
-                    // Add click event listener to marker
-                    marker.on('popupopen', function() {
-                        // Add event listener for photo button after popup opens
-                        const photoBtn = document.getElementById(`photo-btn-${feature.properties.park_id || ''}`);
-                        if (photoBtn && feature.properties.carpark_photo && feature.properties.carpark_photo !== 'None') {
-                            photoBtn.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                showCarparkPhoto(
-                                    feature.properties.carpark_photo, 
-                                    feature.properties.name_tc || feature.properties.name_en
-                                );
-                            });
-                        }
-                    });
-                    
-                    // Add marker to the feature group
-                    marker.addTo(carparkMarkers);
+                // Set up filter event listeners
+                const districtSelect = document.getElementById('district-select');
+                const filterApplyBtn = document.getElementById('filter-apply');
+                const filterResetBtn = document.getElementById('filter-reset');
+				
+                filterResetBtn.addEventListener('click', function() {
+                    districtSelect.value = defaultOption;
+                    filterMarkersByDistrict(defaultOption);
                 });
                 
-                // Fit map bounds to show all markers
-                map.fitBounds(carparkMarkers.getBounds().pad(0.1));
+                // Also apply filter when selection changes (optional)
+                districtSelect.addEventListener('change', function() {
+                    const selectedDistrict = this.value;
+                    filterMarkersByDistrict(selectedDistrict);
+                });
+                
+                // Show all markers initially
+                filterMarkersByDistrict(defaultOption);
                 
             } catch (error) {
                 console.error('載入停車場數據時發生錯誤:', error);
@@ -328,22 +640,43 @@
             }
         }
         
+        // Add responsive behavior for window resize
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(function() {
+                // Re-center map on resize for better mobile experience
+                if (isMobileDevice()) {
+                    map.invalidateSize();
+                }
+            }, 250);
+        });
+        
+        // Auto-collapse header on mobile devices
+        if (isMobileDevice()) {
+            setTimeout(() => {
+                headerCollapsed = true;
+                headerContent.classList.add('collapsed');
+                toggleIcon.classList.add('collapsed');
+                toggleIcon.textContent = '▲';
+            }, 3000); // Collapse after 3 seconds on mobile
+        }
+        
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', loadCarparkData);
-        
-        // Add map control for Traditional Chinese users
-        L.control.layers(null, null, {
-            position: 'topright',
-            collapsed: false
-        }).addTo(map);
         
         // Add scale control
         L.control.scale({
             imperial: false, // 使用公制單位
-            metric: true
+            metric: true,
+            position: 'bottomleft'
+        }).addTo(map);
+        
+        // Add zoom control with mobile-friendly position
+        L.control.zoom({
+            position: isMobileDevice() ? 'bottomright' : 'topright'
         }).addTo(map);
     </script>
-    
     <!-- Bootstrap Icons for button icon -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </body>
